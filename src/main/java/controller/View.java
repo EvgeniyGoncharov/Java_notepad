@@ -3,37 +3,25 @@ package controller;
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 
-import java.awt.Rectangle;
-
-import javax.swing.JFrame;
-
-import javax.swing.JScrollPane;
-
-import javax.swing.JTextArea;
-
-import javax.swing.SwingUtilities;
-
-import javax.swing.event.DocumentEvent;
-
-import javax.swing.event.DocumentListener;
-
 /**
  * Класс, отвечающий за логику работы приложения
  */
 public class View implements ActionListener{
 
-    JFrame window;
-    File_Functions file = new File_Functions(this);
+    public JFrame window;
+    controller.File_Functions file = new File_Functions(this);
     /**
      * Поле для ввода текста
      */
-    public JTextArea textField = new JTextArea();
+    public static JTextArea textField = new JTextArea();
 
 
     /**
@@ -46,15 +34,18 @@ public class View implements ActionListener{
     /**
      * Меню программы
      */
-    private JMenuBar mainMenu = new JMenuBar();
+    public JMenuBar mainMenu = new JMenuBar();
     /**
      * Пункт меню "Выбор шрифта"
      */
-    private JMenu setFont = new JMenu("Set Font");
+    public static JMenu setFont = new JMenu("Set Font");
 
-    private JMenu fileBar = new JMenu("File");
+    public static JMenu fileBar = new JMenu("File");
 
-    private JMenuItem iNew = new JMenuItem("New"), iOpen = new JMenuItem("Open"), iSave = new JMenuItem("Save"), iSaveAs = new JMenuItem("SaveAs");
+    public static JMenuItem iNew = new JMenuItem("New");
+    public JMenuItem iOpen = new JMenuItem("Open");
+    public static JMenuItem iSave = new JMenuItem("Save");
+    public JMenuItem iSaveAs = new JMenuItem("SaveAs");
 
     /**
      * Установить шрифт "Arial"
@@ -75,7 +66,7 @@ public class View implements ActionListener{
     /**
      * Установить стиль текста "Bold"
      */
-    private JMenuItem italic = new JMenuItem("Italic");
+    public static JMenuItem italic = new JMenuItem("Italic");
 
     /**
      * Пункт меню "Перенос строки"
@@ -84,11 +75,11 @@ public class View implements ActionListener{
     /**
      * Скопировать текст в буфер обмена
      */
-    private JButton copy = new JButton("Copy");
+    public static JButton copy = new JButton("Copy");
     /**
      * Вставить текст из буфера обмена
      */
-    private JButton paste = new JButton("Paste");
+    public static JButton paste = new JButton("Paste");
 
     private JMenuItem row = new JMenuItem();
 
@@ -121,7 +112,7 @@ public class View implements ActionListener{
         iOpen.addActionListener(this);
         iOpen.setActionCommand("Open");
         fileBar.add(iSave);
-        iOpen.addActionListener(this);
+        iSave.addActionListener(this);
         iSave.setActionCommand("Save");
         fileBar.add(iSaveAs);
         iSaveAs.addActionListener(this);
@@ -149,7 +140,7 @@ public class View implements ActionListener{
 
         textField.addCaretListener(new CaretHandler());
 
-        LineNumberingTextArea lineNumberingTextArea = new LineNumberingTextArea(textField);
+        final LineNumberingTextArea lineNumberingTextArea = new LineNumberingTextArea(textField);
         scrollPane.setRowHeaderView(lineNumberingTextArea);
 
         textField.getDocument().addDocumentListener(new DocumentListener()
@@ -225,30 +216,58 @@ public class View implements ActionListener{
     /**
      * Вспомогательный класс для реализации копирования текста в буфер обмена через кнопку
      */
-    private class Copy implements ActionListener {
+    public static class Copy implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             StringSelection stringSelection = new StringSelection(textField.getText());
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             clipboard.setContents(stringSelection, null);
         }
+        public String getClipboardContents() {
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            Transferable transferable = clipboard.getContents(null);
+            try {
+                return (String) transferable.getTransferData(DataFlavor.stringFlavor);
+            } catch (UnsupportedFlavorException | IOException ex) {
+                ex.printStackTrace();
+                return null;
+            }
+        }
     }
     /**
      * Вспомогательный класс для реализации вставки текста из буфера обмена через кнопку
      */
-    private class Paste implements ActionListener  {
+    public static class Paste implements ActionListener {
+        private Clipboard clipboard;
+
+        // Конструктор, который принимает Clipboard
+        public Paste(Clipboard clipboard) {
+            this.clipboard = clipboard;
+        }
+
+        // Пустой конструктор, если вы хотите использовать системный буфер обмена
+        public Paste() {
+            this.clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        }
+
         @Override
         public void actionPerformed(ActionEvent e) {
-            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             DataFlavor flavor = DataFlavor.stringFlavor;
-            if(clipboard.isDataFlavorAvailable(flavor)) {
+
+            if (clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
                 try {
-                    textField.setText(clipboard.getData(flavor).toString());
-                } catch (UnsupportedFlavorException ex) {
-                    throw new RuntimeException(ex);
-                } catch (IOException ex) {
+                    String clipboardData = (String) clipboard.getData(flavor);
+                    textField.setText(clipboardData);
+                    System.out.println(clipboardData);
+                    textField.repaint();
+                } catch (UnsupportedFlavorException | IOException ex) {
                     throw new RuntimeException(ex);
                 }
+            }
+            else {
+                clipboard.isDataFlavorAvailable(flavor);
+
+                System.out.println("clipboard.isDataFlavorAvailable(flavor) is false");
             }
         }
     }

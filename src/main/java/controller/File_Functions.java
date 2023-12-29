@@ -7,7 +7,7 @@ import java.io.FileWriter;
 
 public class File_Functions {
 
-    View view;
+    controller.View view;
     String fileName = null, fileAdress = null;
     public File_Functions(View view){
         this.view = view;
